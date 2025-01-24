@@ -60,25 +60,36 @@ def query_employees(employee_id: str, cur: psycopg2.extensions.cursor) -> list[O
     :param cur: psycopg2 cursor object for sql execution
     :return: list of tuples representing entries that were found or an empty list
     """
+
+    top_level, bottom_level = os.environ["HIER_TOP_LEVEL"], os.environ["HIER_BOTTOM_LEVEL"]
     cur.execute("""
-        WITH RECURSIVE tree AS (
-          SELECT id, parent_id, name, type, id AS root_id
-          FROM hier h
-          WHERE type = 1
-          UNION ALL
-          SELECT h.id, h.parent_id, h.name, h.type, t.root_id
-          FROM hier h
-          JOIN tree t ON t.id = h.parent_id
+        WITH RECURSIVE path AS (
+            SELECT h.id, h.parent_id, h.name, h.type
+            FROM hier h
+            WHERE h.id = %s
+            UNION ALL
+            SELECT h.id, h.parent_id, h.name, h.type
+            FROM hier h
+            JOIN path p ON p.parent_id = h.id
         ),
-        city AS (
-          SELECT root_id
-          FROM tree
-          WHERE id = %s
+        top AS (
+            SELECT p.id
+            FROM path p
+            WHERE p.type = %s
+        ),
+        children AS (
+            SELECT h.id, h.parent_id, h.name, h.type
+            FROM hier h
+            WHERE h.id = (SELECT t.id FROM top t)
+            UNION ALL
+            SELECT h.id, h.parent_id, h.name, h.type
+            FROM hier h
+            JOIN children c ON c.id = h.parent_id
         )
-        SELECT t.*
-        FROM tree t
-        WHERE t.root_id = (SELECT root_id FROM city) and type = 3
-    """, (employee_id,))
+        SELECT c.id, c.parent_id, c.name, c.type
+        FROM children c
+        WHERE c.type = %s
+    """, (employee_id, top_level, bottom_level))
 
     return cur.fetchall()
 
