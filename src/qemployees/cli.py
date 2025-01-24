@@ -1,6 +1,12 @@
 import argparse
 
-from .qemployees import get_conn, query_employees, create_table, truncate_table, load_fixture
+from .qemployees import (
+    get_conn,
+    query_employees,
+    create_table,
+    truncate_table,
+    load_fixture,
+)
 
 
 def run_service(args) -> None:
@@ -51,45 +57,27 @@ def init_parser() -> argparse.ArgumentParser:
         title="Operation mode",
         description="Choose either service or query mode",
         help="Service mode is for DB and data manipulation. Query mode is a 'combat' mode for querying employees",
-        required=True
+        required=True,
     )
 
     # Service parser setup
     parser_service = subparsers.add_parser(
-        "service",
-        help="Service mod for table and data manipulation"
+        "service", help="Service mod for table and data manipulation"
     )
     parser_service.add_argument(
-        "-i",
-        "--init",
-        help="Create table if not exists",
-        action="store_true"
+        "-i", "--init", help="Create table if not exists", action="store_true"
     )
     parser_service.add_argument(
-        "-t",
-        "--truncate",
-        help="Truncate table",
-        action="store_true"
+        "-t", "--truncate", help="Truncate table", action="store_true"
     )
     parser_service.add_argument(
-        "-ld",
-        "--loaddata",
-        help="Path to a fixture to load",
-        type=str
+        "-ld", "--loaddata", help="Path to a fixture to load", type=str
     )
     parser_service.set_defaults(func=run_service)
 
     # Combat mode parser setup
-    parser_query = subparsers.add_parser(
-        "query",
-        help="Query (combat) mode"
-    )
-    parser_query.add_argument(
-        "employee_id",
-        metavar="ID",
-        type=str,
-        help="Employee id"
-    )
+    parser_query = subparsers.add_parser("query", help="Query (combat) mode")
+    parser_query.add_argument("employee_id", metavar="ID", type=str, help="Employee id")
     parser_query.set_defaults(func=run_query)
 
     return parser

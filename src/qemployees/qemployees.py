@@ -49,11 +49,13 @@ def load_fixture(fp: str, cur: psycopg2.extensions.cursor) -> None:
         cur=cur,
         sql="INSERT INTO hier (id, parent_id, name, type) VALUES %s",
         argslist=fixture_data,
-        template=os.environ["JSON_TENPLATE"]
+        template=os.environ["JSON_TENPLATE"],
     )
 
 
-def query_employees(employee_id: str, cur: psycopg2.extensions.cursor) -> list[Optional[tuple]]:
+def query_employees(
+    employee_id: str, cur: psycopg2.extensions.cursor
+) -> list[Optional[tuple]]:
     """
     Query a full list of employees from the same office as a given employee
     :param employee_id: primary key id for the employee in question
@@ -61,8 +63,12 @@ def query_employees(employee_id: str, cur: psycopg2.extensions.cursor) -> list[O
     :return: list of tuples representing entries that were found or an empty list
     """
 
-    top_level, bottom_level = os.environ["HIER_TOP_LEVEL"], os.environ["HIER_BOTTOM_LEVEL"]
-    cur.execute("""
+    top_level, bottom_level = (
+        os.environ["HIER_TOP_LEVEL"],
+        os.environ["HIER_BOTTOM_LEVEL"],
+    )
+    cur.execute(
+        """
         WITH RECURSIVE path AS (
             SELECT h.id, h.parent_id, h.name, h.type
             FROM hier h
@@ -89,7 +95,9 @@ def query_employees(employee_id: str, cur: psycopg2.extensions.cursor) -> list[O
         SELECT c.id, c.parent_id, c.name, c.type
         FROM children c
         WHERE c.type = %s
-    """, (employee_id, top_level, bottom_level))
+    """,
+        (employee_id, top_level, bottom_level),
+    )
 
     return cur.fetchall()
 
